@@ -352,7 +352,7 @@ function handleTable(
         ensure(field.sqlBatch, 'parentKey'),
         namespace
       ),
-      grouped: sqlASTNode.sqlBatch.grouped
+      grouped: field.sqlBatch.grouped
     }
   }
 

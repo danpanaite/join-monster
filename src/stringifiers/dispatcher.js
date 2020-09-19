@@ -202,7 +202,7 @@ async function _stringifySqlAST(
     default:
       throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
-  return { selections, tables, wheres, orders }
+  return { selections, tables, wheres, orders, groups }
 }
 
 async function handleTable(

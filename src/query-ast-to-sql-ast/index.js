@@ -275,6 +275,10 @@ function handleTable(
     sqlASTNode.where = field.where
   }
 
+  if (field.grouped) {
+    sqlASTNode.grouped = field.grouped
+  }
+
   /*
    * figure out if they are doing one-to-many/many-to-many or join/batch
    * and collect the relevant info
@@ -338,12 +342,17 @@ function handleTable(
     }
     // or are they doing a one-to-many with batching
   } else if (field.sqlBatch) {
+    if (field.sqlBatch.grouped) {
+      config.uniqueKey = field.sqlBatch.thisKey || config.uniqueKey
+    }
+
     sqlASTNode.sqlBatch = {
       thisKey: columnToASTChild(ensure(field.sqlBatch, 'thisKey'), namespace),
       parentKey: columnToASTChild(
         ensure(field.sqlBatch, 'parentKey'),
         namespace
-      )
+      ),
+      grouped: sqlASTNode.sqlBatch.grouped
     }
   }
 

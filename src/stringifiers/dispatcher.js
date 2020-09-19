@@ -19,7 +19,7 @@ export default async function stringifySqlAST(topNode, context, options) {
   }
 
   // recursively figure out all the selections, joins, and where conditions that we need
-  let { selections, tables, wheres, orders } = await _stringifySqlAST(
+  let { selections, tables, wheres, orders, groups } = await _stringifySqlAST(
     null,
     topNode,
     [],
@@ -29,7 +29,8 @@ export default async function stringifySqlAST(topNode, context, options) {
     [],
     [],
     options.batchScope,
-    dialect
+    dialect,
+    []
   )
 
   // make sure these are unique by converting to a set and then back to an array
@@ -52,6 +53,10 @@ export default async function stringifySqlAST(topNode, context, options) {
     sql += '\nORDER BY ' + stringifyOuterOrder(orders, dialect.quote)
   }
 
+  if (groups.length) {
+    sql += `\n${groups[0]}`
+  }
+
   return sql
 }
 
@@ -65,7 +70,8 @@ async function _stringifySqlAST(
   wheres,
   orders,
   batchScope,
-  dialect
+  dialect,
+  groups
 ) {
   const { quote: q } = dialect
   const parentTable = node.fromOtherTable || (parent && parent.as)
@@ -81,7 +87,8 @@ async function _stringifySqlAST(
         wheres,
         orders,
         batchScope,
-        dialect
+        dialect,
+        groups
       )
 
       // recurse thru nodes
@@ -97,7 +104,8 @@ async function _stringifySqlAST(
             wheres,
             orders,
             null,
-            dialect
+            dialect,
+            groups
           )
         }
       }
@@ -114,7 +122,8 @@ async function _stringifySqlAST(
         wheres,
         orders,
         batchScope,
-        dialect
+        dialect,
+        groups
       )
 
       // recurse thru nodes
@@ -131,7 +140,8 @@ async function _stringifySqlAST(
               wheres,
               orders,
               null,
-              dialect
+              dialect,
+              groups
             )
           }
         }
@@ -146,7 +156,8 @@ async function _stringifySqlAST(
             wheres,
             orders,
             null,
-            dialect
+            dialect,
+            groups
           )
         }
       }
@@ -204,7 +215,8 @@ async function handleTable(
   wheres,
   orders,
   batchScope,
-  dialect
+  dialect,
+  groups
 ) {
   const { quote: q } = dialect
   // generate the "where" condition, if applicable
@@ -415,6 +427,9 @@ async function handleTable(
           ','
         )})`
       )
+      if (node.sqlBatch.grouped) {
+        groups.push(`GROUP BY ${q(node.as)}.${q(node.sqlBatch.thisKey.name)}`)
+      }
     }
     // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause
   } else if (node.paginate) {
